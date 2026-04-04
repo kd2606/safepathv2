@@ -1,0 +1,419 @@
+/* ============================================
+   SAFEPATH — Glassmorphism Component Styles
+   ============================================
+   Reusable glass cards, panels, and surfaces
+   ============================================ */
+
+/* ── BASE GLASS CARD ── */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--glass-shadow);
+  transition:
+    transform var(--transition-base),
+    box-shadow var(--transition-base),
+    background var(--transition-base);
+}
+
+/* Hover lift effect — only on pointer devices */
+@media (hover: hover) {
+  .glass:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 12px 40px rgba(0, 0, 0, 0.45),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
+    background: var(--glass-bg-hover);
+  }
+}
+
+/* Active press effect */
+.glass:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Smaller radius variant */
+.glass--sm {
+  border-radius: var(--border-radius-sm);
+}
+
+/* Full-width variant (no side margin) */
+.glass--full {
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+}
+
+
+/* ── GLASS CARD — Padded content container ── */
+.glass-card {
+  composes: glass;
+  padding: var(--space-lg);
+}
+
+.glass-card--compact {
+  padding: var(--space-md);
+}
+
+.glass-card--interactive {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+
+/* ── SAFETY STATUS CARD ── */
+.safety-status {
+  padding: var(--space-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Ambient status glow (behind the card) */
+.safety-status::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 200px;
+  height: 200px;
+  border-radius: var(--border-radius-full);
+  background: radial-gradient(circle, var(--safe-green), transparent 70%);
+  opacity: 0.08;
+  pointer-events: none;
+  transition: background var(--transition-slow);
+}
+
+.safety-status--danger::before {
+  background: radial-gradient(circle, var(--danger-red), transparent 70%);
+  opacity: 0.12;
+}
+
+.safety-status--caution::before {
+  background: radial-gradient(circle, var(--caution-amber), transparent 70%);
+  opacity: 0.1;
+}
+
+.safety-status__indicator {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--border-radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  background: rgba(0, 200, 83, 0.15);
+  animation: statusPulse 3s ease-in-out infinite;
+}
+
+.safety-status--danger .safety-status__indicator {
+  background: rgba(255, 59, 48, 0.15);
+}
+
+.safety-status--caution .safety-status__indicator {
+  background: rgba(255, 179, 0, 0.15);
+}
+
+@keyframes statusPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.05); opacity: 0.85; }
+}
+
+.safety-status__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+
+.safety-status__text {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+
+/* ── QUICK STATS ROW ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-sm);
+}
+
+.stat-card {
+  padding: var(--space-md);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.stat-card__value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.stat-card__label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1.3;
+}
+
+.stat-card__icon {
+  font-size: 1.2rem;
+  margin-bottom: 2px;
+}
+
+
+/* ── SECTION HEADER ── */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm) 0;
+}
+
+.section-header__title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-secondary);
+}
+
+.section-header__action {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.section-header__action:hover {
+  color: var(--text-primary);
+}
+
+
+/* ── REPORT LIST ITEM ── */
+.report-item {
+  padding: var(--space-md) var(--space-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  cursor: pointer;
+}
+
+.report-item + .report-item {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.report-item__severity {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--border-radius-full);
+  flex-shrink: 0;
+}
+
+.report-item__severity--high {
+  background: var(--danger-red);
+  box-shadow: 0 0 8px rgba(255, 59, 48, 0.5);
+}
+
+.report-item__severity--medium {
+  background: var(--caution-amber);
+  box-shadow: 0 0 8px rgba(255, 179, 0, 0.4);
+}
+
+.report-item__severity--low {
+  background: var(--safe-green);
+  box-shadow: 0 0 8px rgba(0, 200, 83, 0.4);
+}
+
+.report-item__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.report-item__title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.report-item__meta {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.report-item__distance {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+
+/* ── AI CHAT BUBBLE (Glass variant) ── */
+.glass-bubble {
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--border-radius) var(--border-radius) var(--border-radius) var(--border-radius-xs);
+  max-width: 85%;
+}
+
+.glass-bubble--ai {
+  background: var(--gemini-blue);
+  border: 1px solid var(--gemini-border);
+  border-radius: var(--border-radius-xs) var(--border-radius) var(--border-radius) var(--border-radius);
+}
+
+.glass-bubble--user {
+  margin-left: auto;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+
+/* ── GLASS INPUT ── */
+.glass-input {
+  width: 100%;
+  padding: var(--space-md) var(--space-lg);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.glass-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.glass-input:focus {
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+}
+
+
+/* ── GLASS BUTTON ── */
+.glass-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition:
+    transform var(--transition-fast),
+    background var(--transition-fast),
+    box-shadow var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.glass-btn:hover {
+  background: var(--glass-bg-hover);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-btn:active {
+  transform: scale(0.97);
+}
+
+.glass-btn--primary {
+  background: rgba(0, 200, 83, 0.2);
+  border-color: rgba(0, 200, 83, 0.35);
+}
+
+.glass-btn--danger {
+  background: rgba(255, 59, 48, 0.2);
+  border-color: rgba(255, 59, 48, 0.35);
+}
+
+
+/* ── GLASS BADGE ── */
+.glass-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 100px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-badge--safe {
+  background: rgba(0, 200, 83, 0.15);
+  border-color: rgba(0, 200, 83, 0.3);
+  color: var(--safe-green);
+}
+
+.glass-badge--danger {
+  background: rgba(255, 59, 48, 0.15);
+  border-color: rgba(255, 59, 48, 0.3);
+  color: var(--danger-red);
+}
+
+.glass-badge--caution {
+  background: rgba(255, 179, 0, 0.15);
+  border-color: rgba(255, 179, 0, 0.3);
+  color: var(--caution-amber);
+}
+
+
+/* ── AVATAR ── */
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--border-radius-full);
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+}
+
+.avatar--sm {
+  width: 32px;
+  height: 32px;
+  font-size: 0.8rem;
+}
+
+.avatar--lg {
+  width: 56px;
+  height: 56px;
+  font-size: 1.3rem;
+}

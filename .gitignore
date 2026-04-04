@@ -1,0 +1,6 @@
+# SafePath
+.env
+.env.local
+node_modules/
+.firebase/
+*.log
