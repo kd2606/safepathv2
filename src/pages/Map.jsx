@@ -108,6 +108,8 @@ export default function Map() {
     );
   };
 
+  const onMapLoad = useCallback((m) => setMap(m), []);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 0.4 } },
@@ -139,7 +141,7 @@ export default function Map() {
             zoom={13}
             center={defaultCenter}
             options={mapOptions}
-            onLoad={useCallback((m) => setMap(m), [])}
+            onLoad={onMapLoad}
           >
             {heatmapData.length > 0 && (
               <HeatmapLayer
