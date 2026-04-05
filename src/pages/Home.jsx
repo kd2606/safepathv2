@@ -22,18 +22,23 @@ export default function Home() {
       setIsAnalyzing(true);
       setGuardianMessage("🤖 Analyzing perimeter...");
       
+      // Step 1: Get reports & update status pill IMMEDIATELY
       const reports = await getNearbyReports();
       const count = reports.length;
-      
-      if (count > 0) {
-        setGuardianStatus("CAUTION");
-      } else {
-        setGuardianStatus("SAFE");
-      }
+      setGuardianStatus(count > 0 ? "CAUTION" : "SAFE");
 
-      const advice = await analyzeSafetyContext(count);
-      setGuardianMessage(advice);
-      setIsAnalyzing(false);
+      // Step 2: Call Gemini for AI advice (may fail gracefully if no key on Vercel)
+      try {
+        const advice = await analyzeSafetyContext(count);
+        setGuardianMessage(advice);
+      } catch {
+        const fallback = count > 0
+          ? `🤖 ${count} alerts nearby. Stay on main roads and keep moving.`
+          : "🤖 Guardian active. Area looks clear. Stay aware.";
+        setGuardianMessage(fallback);
+      } finally {
+        setIsAnalyzing(false);
+      }
     }
     initGuardian();
   }, []);

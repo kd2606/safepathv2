@@ -12,8 +12,10 @@ const model = genAI.getGenerativeModel({
 
 export const analyzeSafetyContext = async (nearbyReportsCount) => {
   if (!apiKey) {
-    console.warn("Gemini API key is missing. Using fallback response.");
-    return "🤖 Guardian active. Stay alert on your route.";
+    // Smart fallback when no API key is configured (e.g. Vercel without env var)
+    if (nearbyReportsCount === 0) return "🤖 Area clear. Stay aware and trust your instincts.";
+    if (nearbyReportsCount <= 3) return `🤖 ${nearbyReportsCount} alert nearby. Stay on busy, well-lit streets.`;
+    return `🤖 ${nearbyReportsCount} alerts nearby. Stay on main roads and keep moving.`;
   }
 
   try {
