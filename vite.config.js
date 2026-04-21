@@ -4,6 +4,9 @@ import { fileURLToPath, URL } from 'url';
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    'process.env': {}
+  },
   server: {
     port: 5173,
     open: false

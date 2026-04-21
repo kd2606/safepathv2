@@ -1,23 +1,167 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
   body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: #000000;
-    color: #f5f5f7;
-    font-family: "-apple-system", "Inter", sans-serif;
+    background-color: #05070a; /* Deep spatial void */
+    color: #ffffff;
+    font-family: 'Inter', -apple-system, sans-serif;
+    min-height: 100dvh;
+    overscroll-behavior: none;
+  }
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer components {
+  /* ── Spatial Ultra-Premium Glass Morphism Engine ── */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    border-radius: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .glass-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .glass-card-light {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .glass-nav {
+    background: rgba(5, 7, 10, 0.6);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .glass-header {
+    background: rgba(5, 7, 10, 0.65);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+
+  /* ── 3D Tactile SOS Glow ── */
+  .sos-glow {
+    filter: drop-shadow(0 0 20px rgba(255, 59, 48, 0.6));
+    animation: sosPulse 2.5s ease-in-out infinite;
+  }
+
+  .safety-glow {
+    filter: drop-shadow(0 0 20px rgba(0, 255, 135, 0.4));
+  }
+
+  /* ── Status Chip Active  ── */
+  .nav-active {
+    background: rgba(255, 255, 255, 0.08); /* Spatial Active State */
+    color: #ffffff;
+    box-shadow: inset 0 2px 10px rgba(255,255,255,0.05);
+  }
+
+  /* ── 3D Tactile Emergency Button  ── */
+  .btn-3d {
+    background: radial-gradient(circle at 50% 20%, #FF5A50, #D00000);
+    box-shadow: 
+      inset 0 6px 15px rgba(255, 255, 255, 0.35), 
+      inset 0 -6px 15px rgba(0, 0, 0, 0.5),
+      0 15px 30px rgba(255, 59, 48, 0.4);
+    transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .btn-3d:active {
+    transform: scale(0.96) translateY(2px);
+    box-shadow: 
+      inset 0 4px 10px rgba(255, 255, 255, 0.2), 
+      inset 0 -4px 10px rgba(0, 0, 0, 0.6),
+      0 5px 15px rgba(255, 59, 48, 0.2);
   }
 }
 
 @layer utilities {
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
+  /* Scrollbar hide */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* Atmospheric blur blobs (Spatial Palette) */
+  .atm-blob-red {
+    position: fixed;
+    border-radius: 50%;
+    background: rgba(255, 59, 48, 0.08);
+    filter: blur(100px);
+    pointer-events: none;
+    z-index: 0;
   }
-  .no-scrollbar {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+  .atm-blob-green {
+    position: fixed;
+    border-radius: 50%;
+    background: rgba(0, 255, 135, 0.08);
+    filter: blur(100px);
+    pointer-events: none;
+    z-index: 0;
   }
+  .atm-blob-cyan {
+    position: fixed;
+    border-radius: 50%;
+    background: rgba(0, 241, 254, 0.08);
+    filter: blur(100px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .atm-blob-secondary {
+    position: fixed;
+    border-radius: 50%;
+    background: rgba(0, 255, 135, 0.08);
+    filter: blur(100px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Text glow */
+  .text-glow-primary { text-shadow: 0 0 20px rgba(255, 59, 48, 0.6); }
+  .text-glow-secondary { text-shadow: 0 0 16px rgba(0, 255, 135, 0.5); }
+  .text-glow-cyan { text-shadow: 0 0 16px rgba(0, 241, 254, 0.5); }
 }
+
+/* ── Keyframes ── */
+@keyframes sosPulse {
+  0%, 100% { filter: drop-shadow(0 0 20px rgba(255, 59, 48, 0.4)); }
+  50%      { filter: drop-shadow(0 0 45px rgba(255, 59, 48, 0.8)); }
+}
+
+@keyframes radarExpand {
+  0%         { transform: scale(1);    opacity: 0.5; }
+  75%, 100%  { transform: scale(1.8); opacity: 0;   }
+}
+
+/* Radar ring animations */
+.radar-ring-1 { animation: radarExpand 3s ease-out infinite; }
+.radar-ring-2 { animation: radarExpand 3s ease-out 0.5s infinite; }
+
+/* custom scrollbar for full-page content */
+::-webkit-scrollbar { width: 0; }

@@ -1,195 +1,263 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
+import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { getSOSByToken } from '../services/db';
+import { auth, signInAnonymously } from '../firebase';
 
-const mapContainerStyle = { width: '100%', height: '100%' };
+/* Fix default marker icon for Vite */
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon   from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({ iconUrl: markerIcon, iconRetinaUrl: markerIcon2x, shadowUrl: markerShadow });
 
-const darkMapOptions = {
-  disableDefaultUI: true,
-  styles: [
-    { elementType: 'geometry', stylers: [{ color: '#0d0d0d' }] },
-    { elementType: 'labels.text.fill', stylers: [{ color: '#6b6b6b' }] },
-    { elementType: 'labels.text.stroke', stylers: [{ color: '#000' }] },
-    { featureType: 'road', elementType: 'geometry.fill', stylers: [{ color: '#1a1a1a' }] },
-    { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#555' }] },
-    { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#000' }] },
-    { featureType: 'poi', stylers: [{ visibility: 'off' }] },
-    { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-  ]
-};
+/* ── Live pan helper ── */
+function LivePan({ lat, lng }) {
+  const map = useMap();
+  useEffect(() => {
+    if (lat && lng) map.panTo([lat, lng], { animate: true, duration: 0.8 });
+  }, [lat, lng, map]);
+  return null;
+}
 
 function formatElapsed(timestamp) {
   if (!timestamp) return '—';
   const start = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-  const diff = Math.floor((Date.now() - start.getTime()) / 1000);
-  const m = Math.floor(diff / 60);
-  const s = diff % 60;
+  const diff  = Math.floor((Date.now() - start.getTime()) / 1000);
+  const m = Math.floor(diff / 60), s = diff % 60;
   if (m < 1) return `${s}s ago`;
   return `${m}m ${s}s ago`;
 }
 
 export default function Track() {
   const { token } = useParams();
-  const [sosData, setSosData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [sosData,  setSosData]  = useState(null);
+  const [loading,  setLoading]  = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [elapsed, setElapsed] = useState('');
-  const mapRef = useRef(null);
+  const [elapsed,  setElapsed]  = useState('');
 
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
-  });
-
-  // Listen real-time to Firestore
+  /* Firestore real-time listener */
   useEffect(() => {
     if (!token) { setNotFound(true); setLoading(false); return; }
 
-    const unsub = getSOSByToken(token, (data) => {
-      setLoading(false);
-      if (!data) { setNotFound(true); return; }
-      setSosData(data);
-      setNotFound(false);
-    });
+    let unsubscribe;
+    const init = async () => {
+      try {
+        if (!auth.currentUser) await signInAnonymously(auth);
+        const unsub = getSOSByToken(token, (data) => {
+          setLoading(false);
+          if (!data) { setNotFound(true); return; }
+          setSosData(data);
+          setNotFound(false);
+        });
+        unsubscribe = unsub;
+      } catch {
+        setNotFound(true);
+        setLoading(false);
+      }
+    };
 
-    return () => unsub?.();
+    init();
+    return () => { if (unsubscribe) unsubscribe(); };
   }, [token]);
 
-  // Live elapsed counter
+  /* Elapsed counter */
   useEffect(() => {
     const interval = setInterval(() => {
-      if (sosData?.timestamp) {
-        setElapsed(formatElapsed(sosData.timestamp));
-      }
+      if (sosData?.timestamp) setElapsed(formatElapsed(sosData.timestamp));
     }, 1000);
     return () => clearInterval(interval);
   }, [sosData]);
 
-  // Pan map to new location
-  useEffect(() => {
-    if (mapRef.current && sosData?.lat && sosData?.lng) {
-      mapRef.current.panTo({ lat: sosData.lat, lng: sosData.lng });
-    }
-  }, [sosData?.lat, sosData?.lng]);
-
   const isActive = sosData?.status === 'active';
 
   return (
-    <div className="w-full h-[100dvh] bg-[#0a0a0a] flex flex-col relative overflow-hidden">
-      {/* Header */}
-      <div className={`shrink-0 px-4 py-3 flex items-center justify-between z-10 border-b
-        ${isActive ? 'bg-[rgba(255,69,58,0.12)] border-[rgba(255,69,58,0.2)]' : 'bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)]'}`}>
+    <div className="w-full h-[100dvh] bg-background flex flex-col relative overflow-hidden">
+
+      {/* ── HEADER ── */}
+      <div className={`shrink-0 flex items-center justify-between px-6 h-16 z-[1000] glass-header shadow-header`}>
         <div className="flex items-center gap-3">
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center
-            ${isActive ? 'bg-[rgba(255,69,58,0.2)]' : 'bg-[rgba(255,255,255,0.08)]'}`}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2L4 8v14h16V8L12 2z" stroke={isActive ? '#ff453a' : '#888'} strokeWidth="2"/>
-            </svg>
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center
+            ${isActive ? 'bg-primary/15 border border-primary/30' : 'bg-surface-container-high border border-outline-variant/20'}`}>
+            <span className={`material-symbols-outlined text-xl ${isActive ? 'text-primary' : 'text-secondary'}`}
+              style={{ fontVariationSettings: "'FILL' 1" }}>shield</span>
           </div>
           <div>
-            <p className="text-[14px] font-semibold text-white leading-tight">SafePath Tracker</p>
-            <p className="text-[11px] text-[#888]">Live location sharing</p>
+            <p className="text-sm font-bold text-white leading-tight">SafePath Tracker</p>
+            <p className="text-[11px] text-on-surface-variant">Live location sharing</p>
           </div>
         </div>
 
         <AnimatePresence>
           <motion.div
-            key={sosData?.status}
+            key={sosData?.status || 'idle'}
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className={`flex items-center gap-[6px] px-3 py-1.5 rounded-full border text-[11px] font-bold
-              ${isActive
-                ? 'bg-[rgba(255,69,58,0.15)] border-[rgba(255,69,58,0.3)] text-[#ff453a]'
-                : 'bg-[rgba(48,209,88,0.1)] border-[rgba(48,209,88,0.25)] text-[#30d158]'
-              }`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-bold uppercase tracking-wider ${
+              isActive
+                ? 'bg-primary/15 border-primary/30 text-primary'
+                : 'bg-secondary/15 border-secondary/30 text-secondary'
+            }`}
           >
             <motion.span
-              animate={isActive ? { opacity: [1, 0.3, 1] } : {}}
+              animate={isActive ? { opacity: [1, 0.3, 1] } : { opacity: 1 }}
               transition={{ duration: 1, repeat: Infinity }}
             >●</motion.span>
-            <span>{isActive ? 'SOS ACTIVE' : sosData ? 'RESOLVED' : '—'}</span>
+            {isActive ? 'SOS Active' : sosData ? 'Resolved' : '—'}
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Map */}
+      {/* ── MAP ── */}
       <div className="flex-1 relative">
+
+        {/* Loading */}
         {loading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#0a0a0a] z-10">
-            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-              className="w-8 h-8 border-2 border-[#ff453a] border-t-transparent rounded-full" />
-            <p className="text-[#888] text-[13px]">Loading live location...</p>
-          </div>
-        )}
-
-        {notFound && !loading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#0a0a0a] px-8 text-center z-10">
-            <div className="w-16 h-16 rounded-2xl bg-[rgba(255,255,255,0.06)] flex items-center justify-center">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="#555" strokeWidth="2"/>
-                <line x1="12" y1="8" x2="12" y2="12" stroke="#555" strokeWidth="2"/>
-                <circle cx="12" cy="16" r="1" fill="#555"/>
-              </svg>
-            </div>
-            <p className="text-white text-[17px] font-semibold">Link not found</p>
-            <p className="text-[#555] text-[13px]">This tracking link is invalid or has expired.</p>
-          </div>
-        )}
-
-        {!loading && !notFound && isLoaded && sosData?.lat && (
-          <GoogleMap
-            mapContainerStyle={mapContainerStyle}
-            center={{ lat: sosData.lat, lng: sosData.lng }}
-            zoom={16}
-            options={darkMapOptions}
-            onLoad={(m) => { mapRef.current = m; }}
-          >
-            {/* Pulsing location marker */}
-            <Marker
-              position={{ lat: sosData.lat, lng: sosData.lng }}
-              icon={{
-                path: window.google.maps.SymbolPath.CIRCLE,
-                scale: 12,
-                fillColor: isActive ? '#ff453a' : '#30d158',
-                fillOpacity: 1,
-                strokeColor: '#fff',
-                strokeWeight: 2,
-              }}
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background z-10">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+              className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full"
             />
-          </GoogleMap>
+            <p className="text-on-surface-variant text-sm">Loading live location...</p>
+          </div>
+        )}
+
+        {/* Not found */}
+        {notFound && !loading && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-background px-8 text-center z-10">
+            <div className="w-20 h-20 rounded-3xl bg-surface-container-high border border-outline-variant/20 flex items-center justify-center">
+              <span className="material-symbols-outlined text-4xl text-on-surface-variant">location_off</span>
+            </div>
+            <div>
+              <p className="font-headline text-xl font-bold text-white mb-2">Link Not Found</p>
+              <p className="text-on-surface-variant text-sm">This tracking link is invalid or has expired.</p>
+            </div>
+          </div>
+        )}
+
+        {/* MAP (always mounted once not loading/notFound) */}
+        {!loading && !notFound && sosData?.lat && (
+          <>
+            <MapContainer
+              center={[sosData.lat, sosData.lng]}
+              zoom={16}
+              style={{ width: '100%', height: '100%' }}
+              zoomControl={false}
+              attributionControl={false}
+              className="z-0"
+            >
+              <TileLayer
+                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                attribution='&copy; CARTO'
+                subdomains="abcd"
+                maxZoom={19}
+              />
+
+              {/* Auto-pan to new location */}
+              <LivePan lat={sosData.lat} lng={sosData.lng} />
+
+              {/* SOS marker */}
+              <CircleMarker
+                center={[sosData.lat, sosData.lng]}
+                radius={14}
+                pathOptions={{
+                  color:       isActive ? '#ff8e83' : '#00fc40',
+                  fillColor:   isActive ? '#ff5b51' : '#00ec3b',
+                  fillOpacity: 1,
+                  weight:      3,
+                  opacity:     1,
+                }}
+              >
+                <Popup>
+                  <div className="text-xs font-bold">{isActive ? '🆘 SOS Active' : '✅ Resolved'}</div>
+                </Popup>
+              </CircleMarker>
+
+              {/* Outer pulse ring */}
+              <CircleMarker
+                center={[sosData.lat, sosData.lng]}
+                radius={26}
+                pathOptions={{
+                  color: isActive ? '#ff8e83' : '#00fc40',
+                  fillColor: 'transparent',
+                  fillOpacity: 0,
+                  weight: 1.5,
+                  opacity: 0.4,
+                }}
+              />
+            </MapContainer>
+
+            {/* Leaflet dark popup styles */}
+            <style>{`
+              .leaflet-container { background: #0e0e0e; }
+              .leaflet-popup-content-wrapper {
+                background: rgba(26,25,25,0.96);
+                color: #fff;
+                border: 1px solid rgba(73,72,71,0.5);
+                border-radius: 12px;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+                backdrop-filter: blur(24px);
+              }
+              .leaflet-popup-tip { background: rgba(26,25,25,0.96); }
+              .leaflet-popup-close-button { color: #adaaaa !important; }
+              .leaflet-control-attribution { display: none; }
+            `}</style>
+          </>
+        )}
+
+        {/* ── Accuracy badge overlay ── */}
+        {isActive && sosData?.lat && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[999] pointer-events-none">
+            <div className="glass-card rounded-full px-4 py-2 border border-primary/25 flex items-center gap-2">
+              <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+              <span className="text-xs font-bold text-primary">LIVE — updating every 5s</span>
+            </div>
+          </div>
         )}
       </div>
 
-      {/* Info Card */}
+      {/* ── INFO CARD ── */}
       {!loading && !notFound && sosData && (
         <motion.div
           initial={{ y: 80, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="shrink-0 bg-[#111] border-t border-[rgba(255,255,255,0.08)] px-4 py-4 flex flex-col gap-3"
+          className="shrink-0 glass-nav border-t border-white/5 px-5 py-4"
         >
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-[rgba(255,255,255,0.05)] rounded-xl p-3">
-              <p className="text-[10px] uppercase tracking-wider text-[#555] mb-1">Started</p>
-              <p className="text-[13px] text-white font-medium">{elapsed || '—'}</p>
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div className="glass-card rounded-2xl p-4 border border-outline-variant/20">
+              <p className="text-[9px] uppercase tracking-[0.12em] text-on-surface-variant mb-1.5">Started</p>
+              <p className="text-sm text-white font-semibold">{elapsed || '—'}</p>
             </div>
-            <div className="bg-[rgba(255,255,255,0.05)] rounded-xl p-3">
-              <p className="text-[10px] uppercase tracking-wider text-[#555] mb-1">Status</p>
-              <p className={`text-[13px] font-medium ${isActive ? 'text-[#ff453a]' : 'text-[#30d158]'}`}>
+            <div className="glass-card rounded-2xl p-4 border border-outline-variant/20">
+              <p className="text-[9px] uppercase tracking-[0.12em] text-on-surface-variant mb-1.5">Status</p>
+              <p className={`text-sm font-bold ${isActive ? 'text-primary' : 'text-secondary'}`}>
                 {isActive ? 'SOS Active' : 'Resolved'}
               </p>
             </div>
           </div>
 
           {isActive && (
-            <div className="bg-[rgba(255,69,58,0.08)] border border-[rgba(255,69,58,0.15)] rounded-xl p-3">
-              <p className="text-[12px] text-[#ff6b63] text-center">
-                🔴 Live location updates every 5 seconds
-              </p>
+            <div className="bg-primary/8 border border-primary/20 rounded-2xl p-3 text-center mb-3">
+              <p className="text-xs text-primary font-medium">🔴 Location updated every 5 seconds</p>
             </div>
           )}
 
-          <p className="text-[10px] text-[#444] text-center">
+          {sosData?.audioUrls && sosData.audioUrls.length > 0 && (
+             <div className="glass-card rounded-2xl p-3 border border-outline-variant/20 mb-3 max-h-[120px] overflow-y-auto">
+                <p className="text-[9px] uppercase tracking-[0.12em] text-on-surface-variant mb-2">Live Audio Recordings</p>
+                <div className="flex flex-col gap-2">
+                  {sosData.audioUrls.map((url, i) => (
+                    <audio key={i} controls src={url} className="w-full h-8 scale-90 origin-left" />
+                  ))}
+                </div>
+             </div>
+          )}
+
+          <p className="text-[10px] text-on-surface-variant/50 text-center">
             Powered by SafePath · safepathv2.web.app
           </p>
         </motion.div>

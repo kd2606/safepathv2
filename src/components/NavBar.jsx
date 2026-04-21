@@ -1,47 +1,42 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 const navItems = [
-  { 
-    id: 'home', 
-    path: '/', 
-    label: 'Home', 
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="currentColor" strokeWidth="2"/>
-      </svg>
-    )
+  {
+    id: 'home',
+    path: '/',
+    label: 'Home',
+    icon: 'home',
+    iconFill: 'home',
   },
-  { 
-    id: 'map', 
-    path: '/map', 
-    label: 'Map', 
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" stroke="currentColor" strokeWidth="2"/>
-      </svg>
-    ) 
+  {
+    id: 'map',
+    path: '/map',
+    label: 'Map',
+    icon: 'radar',
+    iconFill: 'radar',
   },
-  { 
-    id: 'chat', 
-    path: '/chat', 
-    label: 'Guardian', 
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <path d="M12 2L4 8v14h16V8L12 2z" stroke="currentColor" strokeWidth="2"/>
-      </svg>
-    ) 
+  {
+    id: 'chat',
+    path: '/chat',
+    label: 'Guardian',
+    icon: 'security',
+    iconFill: 'security',
   },
-  { 
-    id: 'profile', 
-    path: '/profile', 
-    label: 'Profile', 
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2"/>
-        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="2"/>
-      </svg>
-    ) 
+  {
+    id: 'safewalk',
+    path: '/safewalk',
+    label: 'Buddies',
+    icon: 'group',
+    iconFill: 'group',
+  },
+  {
+    id: 'profile',
+    path: '/profile',
+    label: 'Profile',
+    icon: 'person',
+    iconFill: 'person',
   },
 ];
 
@@ -50,31 +45,65 @@ export default function NavBar() {
   const [activeTab, setActiveTab] = useState('home');
 
   useEffect(() => {
-    const currentPath = location.pathname === '/' ? 'home' : location.pathname.substring(1);
-    const item = navItems.find((nav) => nav.id === currentPath || (currentPath === '' && nav.id === 'home'));
-    if (item) setActiveTab(item.id);
+    const path = location.pathname;
+    if (path === '/' || path === '/home') setActiveTab('home');
+    else if (path === '/map')     setActiveTab('map');
+    else if (path === '/chat')    setActiveTab('chat');
+    else if (path === '/safewalk') setActiveTab('safewalk');
+    else if (path === '/profile') setActiveTab('profile');
   }, [location]);
 
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] h-[60px] z-40 flex justify-around items-center bg-[rgba(0,0,0,0.9)] backdrop-blur-[20px] border-t border-border-color">
-      {navItems.map((item) => {
-        const isActive = activeTab === item.id;
-        
-        return (
-          <Link
-            key={item.id}
-            to={item.path}
-            className={`flex flex-col items-center justify-center gap-[4px] px-2 transition-colors duration-200 ${isActive ? 'text-accent' : 'text-text-tertiary'}`}
-          >
-            <div className="flex items-center justify-center h-[24px]">
-              {item.icon}
-            </div>
-            <span className="text-[10px] font-medium tracking-wide">
-              {item.label}
-            </span>
-          </Link>
-        );
-      })}
+    <nav className="fixed bottom-0 left-0 w-full z-50 glass-nav shadow-[0_-15px_40px_rgba(0,0,0,0.8)] pb-safe">
+      {/* Top border glow line */}
+      <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      
+      <div className="flex justify-around items-center h-[88px] px-2 relative z-10 max-w-lg mx-auto">
+        {navItems.map((item) => {
+          const isActive = activeTab === item.id;
+          return (
+            <Link
+              key={item.id}
+              to={item.path}
+              className={`relative flex flex-col items-center justify-center gap-1.5 px-3 py-3 w-[72px] transition-all duration-300 active:scale-90 ${
+                isActive
+                  ? 'text-white'
+                  : 'text-on-surface-variant hover:text-white/80'
+              }`}
+            >
+              {isActive && (
+                <motion.div
+                  layoutId="navIndicator"
+                  className="absolute inset-0 bg-white/5 border border-white/10 rounded-[1.25rem] shadow-[0_10px_20px_rgba(0,0,0,0.5),inset_0_2px_15px_rgba(255,255,255,0.05)] -z-10"
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                />
+              )}
+              
+              <div className="relative">
+                {isActive && (
+                  <div className="absolute inset-0 bg-secondary/30 blur-[12px] rounded-full scale-150" />
+                )}
+                <span
+                  className={`material-symbols-outlined text-[28px] relative z-10 transition-colors duration-300 ${
+                    isActive ? 'text-secondary drop-shadow-[0_0_12px_rgba(0,255,135,0.8)]' : ''
+                  }`}
+                  style={{
+                    fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0",
+                  }}
+                >
+                  {item.icon}
+                </span>
+              </div>
+
+              <span className={`text-[10px] font-black uppercase tracking-widest leading-none transition-colors duration-300 ${
+                isActive ? 'text-white drop-shadow-md' : 'opacity-70'
+              }`}>
+                {item.label}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
     </nav>
   );
 }

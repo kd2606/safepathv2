@@ -13,15 +13,7 @@ const SHELL_CACHE = 'safepath-shell-v1';
 const SHELL_FILES = [
   '/',
   '/index.html',
-  '/manifest.json',
-  '/src/app.js',
-  '/src/firebase.js',
-  '/src/pages/home.js',
-  '/src/pages/sos.js',
-  '/src/pages/map.js',
-  '/src/pages/chat.js',
-  '/src/styles/main.css',
-  '/src/styles/glass.css',
+  '/manifest.json'
 ];
 
 

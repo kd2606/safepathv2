@@ -1,19 +1,15 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp, updateDoc, doc, getDoc, onSnapshot } from "firebase/firestore";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInAnonymously } from "firebase/auth";
+import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp, updateDoc, doc, getDoc, setDoc, onSnapshot, arrayUnion } from "firebase/firestore";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import config from "./config/keys";
 
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "dummy-api-key",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "dummy-auth-domain",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "dummy-project-id",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "dummy-storage-bucket",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "dummy-sender-id",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "dummy-app-id"
-};
+const firebaseConfig = config.firebase;
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
 const googleProvider = new GoogleAuthProvider();
 
@@ -29,4 +25,4 @@ export const signInWithGoogle = async () => {
 
 export const logOut = () => signOut(auth);
 
-export { auth, db, onAuthStateChanged, collection, addDoc, getDocs, query, where, serverTimestamp, updateDoc, doc, getDoc, onSnapshot };
+export { auth, db, storage, onAuthStateChanged, signInAnonymously, collection, addDoc, getDocs, query, where, serverTimestamp, updateDoc, doc, getDoc, setDoc, onSnapshot, ref, uploadBytes, getDownloadURL, arrayUnion };

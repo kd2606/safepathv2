@@ -4,31 +4,35 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ── Users collection ──
-    // Only the authenticated user can read/write their own document.
+    // Only the authenticated (non-anonymous) user can read/write their own doc.
     match /users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
 
     // ── Danger Reports collection ──
-    // Any authenticated user can read reports.
-    // Only the reporter can create; anyone can upvote (update).
+    // Anyone can READ (so heatmap works without sign-in).
+    // Only authenticated users (including anonymous) can CREATE.
+    // Any auth user can UPDATE (for upvotes).
+    // Only the reporter can DELETE.
     match /dangerReports/{reportId} {
-      allow read: if request.auth != null;
+      allow read: if true;
       allow create: if request.auth != null;
       allow update: if request.auth != null;
-      allow delete: if request.auth != null 
-                    && resource.data.reportedBy == request.auth.uid;
+      allow delete: if request.auth != null
+                    && resource.data.userId == request.auth.uid;
     }
 
     // ── SOS Events collection ──
-    // Only the creator can write.
-    // Anyone authenticated can read (for community awareness).
+    // READ: authenticated users can read (includes anonymous — for tracker link).
+    // CREATE: any authenticated user (anonymous OK for SOS from non-signed-in).
+    // UPDATE: only the creator (anonymous or real) can update location.
+    // DELETE: never — SOS events are permanent audit trail.
     match /sosEvents/{eventId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null;
-      allow update: if request.auth != null 
+      allow update: if request.auth != null
                     && resource.data.userId == request.auth.uid;
-      allow delete: if false; // SOS events are immutable
+      allow delete: if false;
     }
   }
 }
